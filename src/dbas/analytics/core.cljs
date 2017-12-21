@@ -15,48 +15,48 @@
 ;; -------------------------
 ;; Views
 
-(defn argument-of-issues-chart [{:keys [refresh-timeout]}]
+(defn argument-of-issues-chart [{:keys [refresh-timeout data]}]
   (let [id (random-uuid)
-        data (r/atom [])]
-    (go-loop [] (let [response (query-dbas "issues{title,statements{uid}}")
+        data (r/atom (or data []))]
+    (go-loop [] (let [response (<! (query-dbas "issues{title,statements{uid}}"))
                       d (mapv #(hash-map :name (:title  %)
                                          :y (count (:statements %)))
-                              (get-in (<! response) [:body :issues]))]
+                              (get-in response [:body :issues]))]
                   (reset! data d)
                   (when refresh-timeout
                     (<! (timeout refresh-timeout))
                     (recur))))
     (fn []
-      [:div.card [highchart/chart {:chart-meta {:id id}
-                                   :chart-data {:chart       {:type "pie"}
-                                                :title       {:text "Statements of Issues"}
-                                                :subtitle    {:text (str "Source: " dbas-base)}
-                                                :plotOptions {:pie {:allowPointSelect true
-                                                                    :cursor           "pointer"
-                                                                    :dataLabels       {:enabled false
-                                                                                       :format  "<b>{point.name}</b>: {point.y}"}
-                                                                    :showInLegend     true}}
-                                                :credits     {:enabled false}
-                                                :series      [{:id 0
-                                                               :name         "Statements"
-                                                               :colorByPoint true
-                                                               :data         @data}]}}]])))
+      [:div.card
+        [highchart/chart {:chart-meta {:id id}
+                          :chart-data {:chart       {:type "pie"}
+                                       :title       {:text "Statements of Issues"}
+                                       :subtitle    {:text (str "Source: " dbas-base)}
+                                       :plotOptions {:pie {:allowPointSelect true
+                                                           :cursor           "pointer"
+                                                           :dataLabels       {:enabled false
+                                                                              :format  "<b>{point.name}</b>: {point.y}"}
+                                                           :showInLegend     true}}
+                                       :credits     {:enabled false}
+                                       :series      [{:id 0
+                                                      :name         "Statements"
+                                                      :colorByPoint true
+                                                      :data         @data}]}}]])))
 
 
 (defn home-page []
-  [:div.container
-   [:div.row [:h1.col-md-12 "Welcome to dbas-analytics"]]
-   [:div.row [:a {:href "/about"} "go to about page"]]
-   [:div.row
+  [:div
+   [:div.row.m-2
     [:div.col-md-4 [argument-of-issues-chart]]
     [:div.col-md-4 [argument-of-issues-chart]]
     [:div.col-md-4 [argument-of-issues-chart {:refresh-timeout 5000}]]]
-   [:div.row [:div.col-md-6 [argument-of-issues-chart]]
+   [:div.row.m-2
+    [:div.col-md-6 [argument-of-issues-chart]]
     [:div.col-md-6 [argument-of-issues-chart]]]])
 
 (defn about-page []
-  [:div [:h2 "About dbas-analytics"]
-   [:div [:a {:href "/"} "go to the home page"]]])
+  [:div.row
+   [:p "This will be an about page!"]])
 
 ;; -------------------------
 ;; Routes
