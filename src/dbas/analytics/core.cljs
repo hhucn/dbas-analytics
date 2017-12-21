@@ -5,7 +5,8 @@
             [accountant.core :as accountant]
             [cljs-http.client :as http]
             [cljs.core.async :refer [<! timeout]]
-            [dbas.analytics.highchart :as highchart]))
+            [dbas.analytics.highchart :as highchart]
+            [dbas.analytics.utils :refer [time-ago]]))
 
 (def dbas-base "https://dbas.cs.uni-duesseldorf.de")
 
@@ -15,17 +16,36 @@
 ;; -------------------------
 ;; Views
 
-(defn argument-of-issues-chart [{:keys [refresh-timeout data]}]
+(defn argument-of-issues-chart
+  "A component witch my fetch data periodically."
+  [{:keys [refresh-timeout data timer] :or {timer true}}]
   (let [id (random-uuid)
-        data (r/atom (or data []))]
-    (go-loop [] (let [response (<! (query-dbas "issues{title,statements{uid}}"))
-                      d (mapv #(hash-map :name (:title  %)
-                                         :y (count (:statements %)))
-                              (get-in response [:body :issues]))]
-                  (reset! data d)
-                  (when refresh-timeout
-                    (<! (timeout refresh-timeout))
-                    (recur))))
+        state (r/atom {:refreshed 0
+                       :data (or data [])})
+        refresh (fn [response]
+                  (reset! state {:refreshed 0
+                                 :data (mapv #(hash-map :name (:title  %)
+                                                        :y (count (:statements %)))
+                                             (get-in response [:body :issues]))}))]
+
+    ; refresh first time
+    (go (refresh (<! (query-dbas "issues{title,statements{uid}}"))))
+
+    ; refresh further
+    (when refresh-timeout
+      (go-loop []
+        (<! (timeout refresh-timeout))
+        (refresh (<! (query-dbas "issues{title,statements{uid}}")))
+        (recur)))
+
+    ; tick timer
+    (when timer
+      (go-loop []
+        (swap! state update :refreshed inc)
+        (<! (timeout 1000))
+        (recur)))
+
+    ;render function. redraws every time 'state' is changed
     (fn []
       [:div.card
         [highchart/chart {:chart-meta {:id id}
@@ -41,18 +61,15 @@
                                        :series      [{:id 0
                                                       :name         "Statements"
                                                       :colorByPoint true
-                                                      :data         @data}]}}]])))
+                                                      :data         (:data @state)}]}}]
+        (when timer [:p.card-text [:small.text-muted "Last updated " (time-ago (:refreshed @state))]])])))
 
 
 (defn home-page []
   [:div
-   [:div.row.m-2
-    [:div.col-md-4 [argument-of-issues-chart]]
-    [:div.col-md-4 [argument-of-issues-chart]]
-    [:div.col-md-4 [argument-of-issues-chart {:refresh-timeout 5000}]]]
-   [:div.row.m-2
+   [:div.row.my-2
     [:div.col-md-6 [argument-of-issues-chart]]
-    [:div.col-md-6 [argument-of-issues-chart]]]])
+    [:div.col-md-6 [argument-of-issues-chart {:refresh-timeout 5000}]]]])
 
 (defn about-page []
   [:div.row
