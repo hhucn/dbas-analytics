@@ -21,7 +21,7 @@
                                                          (clj->js chart-data))]
                 (swap! chart-instances assoc chart-id chart-instance)))
             (update-series
-              [chart-instance {:keys [id data] :or {id 0}}]
+              [chart-instance {:keys [id data]}]
               (-> chart-instance
                   (.get id)
                   (.setData (clj->js data))))
@@ -34,6 +34,6 @@
                 (if-let [chart-instance (get @chart-instances chart-id)]
                   (doall (map (partial update-series chart-instance) (:series chart-data)))
                   (mount-chart this))))]
-      (r/create-class {:reagent-render render-chart
-                       :component-did-mount mount-chart
+      (r/create-class {:reagent-render       render-chart
+                       :component-did-mount  mount-chart
                        :component-did-update update-chart}))))
