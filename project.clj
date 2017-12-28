@@ -9,10 +9,12 @@
                  [reagent "0.7.0"]
                  [secretary "1.2.3"]
                  [venantius/accountant "0.2.3"]
-                 [cljs-http "0.1.44"]]
+                 [cljs-http "0.1.44"]
+                 [lein-doo "0.1.8"]]
 
   :plugins [[lein-cljsbuild "1.1.5"]
-            [lein-figwheel "0.5.14"]]
+            [lein-figwheel "0.5.14"]
+            [lein-doo "0.1.8"]]
 
   :min-lein-version "2.5.0"
 
@@ -27,6 +29,10 @@
              :nrepl-port 7002
              :nrepl-middleware ["cemerick.piggieback/wrap-cljs-repl"]
              :css-dirs ["public/css"]}
+
+  :doo {:build "test"
+        :alias {:default [:phantom]}
+        :paths {:phantom "phantomjs"}}
 
   :cljsbuild {:builds {:app
                        {:source-paths ["src" "env/dev/cljs"]
@@ -48,7 +54,14 @@
                          :output-dir "public/js/release"
                          :asset-path   "js/out"
                          :optimizations :advanced
-                         :pretty-print false}}}}
+                         :pretty-print false}}
+                       :test
+                         {:source-paths ["src" "test" "env/dev/cljs"]
+                          :compiler {:main runners.doo
+                                     :optimizations :none
+                                     :asset-path "public/js/test/out"
+                                     :output-dir "public/js/test/out"
+                                     :output-to "public/js/test/all-tests.js"}}}}
 
   :aliases {"package" ["do" "clean" ["cljsbuild" "once" "release"]]}
 

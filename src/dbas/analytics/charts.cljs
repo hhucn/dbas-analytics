@@ -7,15 +7,16 @@
             [cljs.core.async :refer [<! timeout]]))
 
 (def dbas-base "http://0.0.0.0:4284")
+;(def dbas-base "https://dbas.cs.uni-duesseldorf.de")
 
 (defn query-dbas [query]
   (http/get (str dbas-base "/api/v2/query?q=query{" query "}")))
 
 (defn statements-of-issues-chart
-  "A component witch my fetch data periodically."
+  "A component witch may fetch data periodically."
   [{:keys [refresh-timeout data timer] :or {timer true}}]
-  (let [id (random-uuid)
-        state (r/atom {:refreshed 0
+  (let [query "issues(isDisabled:false){title,statements{uid}}"
+        state (r/atom {:refreshed nil
                        :data      (or data [])})
         refresh (fn [response]
                   (reset! state {:refreshed 0
@@ -24,7 +25,7 @@
                                                   (get-in response [:body :issues]))}))]
 
     ; refresh first time
-    (go (refresh (<! (query-dbas "issues(isDisabled:false){title,statements{uid}}"))))
+    (go (refresh (<! (query-dbas query))))
 
     ; refresh further
     (when refresh-timeout
@@ -43,8 +44,7 @@
     ;render function. redraws every time 'state' is changed
     (fn []
       [:div.card
-       [highchart/chart {:chart-meta {:id id}
-                         :chart-data {:chart       {:type "pie"}
+       [highchart/chart {:chart-data {:chart       {:type "pie"}
                                       :title       {:text "Statements of Issues"}
                                       :subtitle    {:text (str "Source: " dbas-base)}
                                       :plotOptions {:pie {:allowPointSelect true
@@ -62,7 +62,6 @@
 
 (defn arguments-of-issues [{:keys [refresh-timeout data timer] :or {data [] timer true}}]
   (let [query "issues(isDisabled:false){title,arguments(isDisabled:false){uid,isSupportive}}"
-        id (random-uuid)
         state (r/atom {:refreshed nil
                        :issues    data})
         refresh (fn [response]
@@ -93,16 +92,15 @@
     ; tick timer
     (when timer
       (go-loop []
-               (swap! state update :refreshed inc 60)
-               (<! (timeout (minutes 1)))
+               (swap! state update :refreshed inc)
+               (<! (timeout 1000))
                (recur)))
 
     ;render function. redraws every time 'state' is changed
     (fn []
       (let [s @state]
         [:div.card
-         [highchart/chart {:chart-meta {:id id}
-                           :chart-data {:chart       {:type "pie"}
+         [highchart/chart {:chart-data {:chart       {:type "pie"}
                                         :title       {:text "Supports for Arguments of Issues"}
                                         :subtitle    {:text (str "Source: " dbas-base)}
                                         :plotOptions {:pie {:allowPointSelect true
