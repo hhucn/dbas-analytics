@@ -13,8 +13,8 @@
 (defn home-page []
   [:div
    [:div.row.my-2
-    [:div.col-md-6 [statements-of-issues-chart {:refresh-timeout (seconds 60)}]]
-    [:div.col-md-6 [arguments-of-issues {:refresh-timeout (seconds 60)}]]]])
+    [:div.col-md-6 [statements-of-issues-chart {:refresh-timeout (seconds 5)}]]
+    [:div.col-md-6 [arguments-of-issues {:refresh-timeout (seconds 5)}]]]])
 
 (defn about-page []
   [:div.row

@@ -6,8 +6,7 @@
             [dbas.analytics.highchart :as highchart]
             [cljs.core.async :refer [<! timeout]]))
 
-(def dbas-base "http://0.0.0.0:4284")
-;(def dbas-base "https://dbas.cs.uni-duesseldorf.de")
+(goog-define dbas-base "http://0.0.0.0:4284")
 
 (defn query-dbas [query]
   (http/get (str dbas-base "/api/v2/query?q=query{" query "}")))
@@ -31,7 +30,7 @@
     (when refresh-timeout
       (go-loop []
                (<! (timeout refresh-timeout))
-               (refresh (<! (query-dbas "issues(isDisabled:false){title,statements{uid}}")))
+               (refresh (<! (query-dbas query)))
                (recur)))
 
     ; tick timer

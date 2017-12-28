@@ -10,7 +10,8 @@
                  [secretary "1.2.3"]
                  [venantius/accountant "0.2.3"]
                  [cljs-http "0.1.44"]
-                 [lein-doo "0.1.8"]]
+                 [lein-doo "0.1.8"]
+                 [cljsjs/highcharts "5.0.14-0"]]
 
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-figwheel "0.5.14"]
@@ -21,7 +22,8 @@
   :clean-targets ^{:protect false}
   [:target-path
    [:cljsbuild :builds :app :compiler :output-dir]
-   [:cljsbuild :builds :app :compiler :output-to]]
+   [:cljsbuild :builds :app :compiler :output-to]
+   "public/js/test"]
 
   :resource-paths ["public"]
 
@@ -50,7 +52,8 @@
                        :release
                        {:source-paths ["src" "env/prod/cljs"]
                         :compiler
-                        {:output-to "public/js/app.js"
+                        {:closure-defines {dbas.analytics.charts.dbas-base "https://dbas.cs.uni-duesseldorf.de"}
+                         :output-to "public/js/app.js"
                          :output-dir "public/js/release"
                          :asset-path   "js/out"
                          :optimizations :advanced

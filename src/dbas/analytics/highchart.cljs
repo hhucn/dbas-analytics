@@ -1,5 +1,6 @@
 (ns dbas.analytics.highchart
-  (:require [reagent.core :as r]))
+  (:require [reagent.core :as r]
+            [cljsjs.highcharts.modules.offline-exporting]))
 
 ; from: https://github.com/cfelde/re-frame-highcharts
 ; Highcharts wants to maintain its own instance, with mutating state.
