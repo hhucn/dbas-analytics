@@ -14,7 +14,7 @@
 (defn statements-of-issues-chart
   "A component witch may fetch data periodically."
   [{:keys [refresh-timeout data timer] :or {timer true}}]
-  (let [query "issues(isDisabled:false){title,statements{uid}}"
+  (let [query "issues{title,statements{uid}}"
         state (r/atom {:refreshed nil
                        :data      (or data [])})
         refresh (fn [response]
@@ -60,7 +60,7 @@
 
 
 (defn arguments-of-issues [{:keys [refresh-timeout data timer] :or {data [] timer true}}]
-  (let [query "issues(isDisabled:false){title,arguments(isDisabled:false){uid,isSupportive}}"
+  (let [query "issues{title,arguments{uid,isSupportive}}"
         state (r/atom {:refreshed nil
                        :issues    data})
         refresh (fn [response]
